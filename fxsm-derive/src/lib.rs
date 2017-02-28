@@ -2,7 +2,6 @@ extern crate proc_macro;
 extern crate syn;
 #[macro_use]
 extern crate quote;
-extern crate fxsm;
 
 use proc_macro::TokenStream;
 use quote::{ Tokens, ToTokens };

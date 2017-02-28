@@ -3,10 +3,17 @@ name = "fxsm-derive"
 version = "0.1.0"
 authors = ["Victor Polevoy <fx@thefx.co>"]
 
+description = "A FSM procedural macro for enums."
+readme = "README.md"
+license = "MIT"
+keywords = ["fsm", "finite", "state", "machine"]
+
+repository = "https://github.com/vityafx/fxsm"
+
 [lib]
+name = "fxsm_derive"
 proc-macro = true
 
 [dependencies]
 syn = "0.11"
 quote = "0.3"
-fxsm = { path = "../fxsm" }

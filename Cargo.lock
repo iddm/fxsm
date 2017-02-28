@@ -14,7 +14,6 @@ version = "0.1.0"
 name = "fxsm-derive"
 version = "0.1.0"
 dependencies = [
- "fxsm 0.1.0",
  "quote 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
