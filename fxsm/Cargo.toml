@@ -1,0 +1,8 @@
+[package]
+name = "fxsm"
+version = "0.1.0"
+authors = ["Victor Polevoy <fx@thefx.co>"]
+
+[dependencies]
+syn = "0.11"
+quote = "0.3"

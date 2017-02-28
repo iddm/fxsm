@@ -1,0 +1,8 @@
+[package]
+name = "fxsm-test"
+version = "0.1.0"
+authors = ["Victor Polevoy <fx@thefx.co>"]
+
+[dependencies]
+fxsm-derive = { path = "fxsm-derive" }
+fxsm = { path = "fxsm" }
