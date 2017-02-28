@@ -2,3 +2,9 @@
 name = "fxsm"
 version = "0.1.0"
 authors = ["Victor Polevoy <fx@thefx.co>"]
+
+description = "A FSM procedural macro for enums."
+license = "MIT"
+keywords = ["fsm", "finite", "state", "machine"]
+
+repository = "https://github.com/vityafx/fxsm"
