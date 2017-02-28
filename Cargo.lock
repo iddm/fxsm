@@ -9,10 +9,6 @@ dependencies = [
 [[package]]
 name = "fxsm"
 version = "0.1.0"
-dependencies = [
- "quote 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.11.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "fxsm-derive"

@@ -1,6 +1,3 @@
-extern crate syn;
-extern crate quote;
-
 pub trait FiniteStateMachine<S> {
     /// Returns true if it changed state successfully; false otherwise.
     fn change(&mut self, new_state: S) -> bool;
