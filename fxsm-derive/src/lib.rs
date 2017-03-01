@@ -7,7 +7,7 @@ use proc_macro::TokenStream;
 use quote::{ Tokens, ToTokens };
 use std::collections::BTreeMap;
 
-const FSM_ATTRIBUTE: &'static str = "state_transitions";
+const TRANSITIONS_ATTRIBUTE: &'static str = "state_transitions";
 const NEW_STATE_OBJ_NAME: &'static str = "new_state";
 
 #[derive(Copy, Clone)]
@@ -63,7 +63,7 @@ fn serialize_variant(ident: &syn::Ident,
                                         *var_data_map.get(&variant.ident.to_string())
                                                      .unwrap_or(&EnumFieldData::Unit));
     let transitions: Vec<_> = variant.attrs.iter()
-        .filter(|a| a.value.name() == FSM_ATTRIBUTE)
+        .filter(|a| a.value.name() == TRANSITIONS_ATTRIBUTE)
         .map(|a| {
             if let syn::MetaItem::List(_, ref nested) = a.value {
                 let transitions: Vec<_> = nested.iter()
@@ -125,22 +125,29 @@ fn serialize_enum(ident: &syn::Ident,
         .collect();
 
     let arms: Vec<_> = variants.iter()
+        .filter(|variant| variant.attrs.iter()
+                          .find(|a| a.value.name() == TRANSITIONS_ATTRIBUTE).is_some())
         .map(|variant| serialize_variant(ident,
                                          &syn::Ident::new(NEW_STATE_OBJ_NAME),
                                          variant,
                                          &var_data_map))
         .collect();
 
+    let others = if arms.len() < variants.len() {
+        quote! { _ => false, }
+    } else {
+        quote! { }
+    };
     quote_expr! {
         match *self {
             #(#arms)*
-            _ => false,
+            #others
         }
     }
 }
 
 fn get_finish_states(name: &syn::Ident,
-                     variants: &[syn::Variant]) -> Fragment {
+                     variants: &[syn::Variant]) -> (Fragment, usize) {
     let var_data_map: BTreeMap<String, EnumFieldData> = variants.iter()
         .map(|var| {
             let field_data = match var.data {
@@ -154,7 +161,7 @@ fn get_finish_states(name: &syn::Ident,
 
     let arms: Vec<syn::Ident> = variants.iter()
         .filter(|variant| !variant.attrs.iter()
-                          .find(|a| a.value.name() == FSM_ATTRIBUTE).is_some())
+                          .find(|a| a.value.name() == TRANSITIONS_ATTRIBUTE).is_some())
         .map(|variant| {
             ident_with_data(name,
                             &variant.ident,
@@ -162,14 +169,20 @@ fn get_finish_states(name: &syn::Ident,
                                  .unwrap_or(&EnumFieldData::Unit))
         })
         .collect();
-        
+
     let new_state_obj_name = syn::Ident::new(NEW_STATE_OBJ_NAME);
-    quote_expr! {
+    let others = if arms.len() < variants.len() {
+        quote! { _ => false, }
+    } else {
+        quote! { }
+    };
+    let len = arms.len();
+    (quote_expr! {
         match #new_state_obj_name {
             #(#arms => true,)*
-            _ => false,
+            #others
         }
-    }
+    }, len)
 }
 
 fn gen_for_copyable(name: &syn::Ident,
@@ -177,25 +190,32 @@ fn gen_for_copyable(name: &syn::Ident,
                     generics: &syn::Generics) -> Tokens {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let transitions = Stmts(serialize_enum(name, variants));
-    let finish_states = Stmts(get_finish_states(name, variants));
+    let finish_states = get_finish_states(name, variants);
+    let finish_states_match = Stmts(finish_states.0);
+    let finish_states_len = finish_states.1;
     let new_state_obj_name = syn::Ident::new(NEW_STATE_OBJ_NAME);
     quote! {
-        impl #impl_generics fxsm::FiniteStateMachine<#name #ty_generics> for #name #ty_generics #where_clause {
-            fn change(&mut self, #new_state_obj_name: #name #ty_generics) -> bool {
+        impl #impl_generics fxsm::StateMachine<#name #ty_generics> for #name #ty_generics #where_clause {
+            fn change(&mut self,
+                      #new_state_obj_name: #name #ty_generics) -> bool {
                 if self.can_change(#new_state_obj_name) {
                     *self = #new_state_obj_name;
                     return true
                 }
                 false
             }
-            fn can_change(&self, #new_state_obj_name: #name #ty_generics) -> bool {
+            fn can_change(&self,
+                          #new_state_obj_name: #name #ty_generics) -> bool {
                 #transitions
             }
             fn is_finish_state(#new_state_obj_name: #name #ty_generics) -> bool {
-                #finish_states
+                #finish_states_match
             }
             fn at_finish_state(&self) -> bool {
                 Self::is_finish_state(*self)
+            }
+            fn finish_states() -> usize {
+                #finish_states_len
             }
         }
     }
@@ -206,25 +226,32 @@ fn gen_for_clonable(name: &syn::Ident,
                     generics: &syn::Generics) -> Tokens {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let transitions = Stmts(serialize_enum(name, variants));
-    let finish_states = Stmts(get_finish_states(name, variants));
+    let finish_states = get_finish_states(name, variants);
+    let finish_states_match = Stmts(finish_states.0);
+    let finish_states_len = finish_states.1;
     let new_state_obj_name = syn::Ident::new(NEW_STATE_OBJ_NAME);
     quote! {
-        impl #impl_generics fxsm::FiniteStateMachine<#name #ty_generics> for #name #ty_generics #where_clause {
-            fn change(&mut self, #new_state_obj_name: #name #ty_generics) -> bool {
+        impl #impl_generics fxsm::StateMachine<#name #ty_generics> for #name #ty_generics #where_clause {
+            fn change(&mut self,
+                      #new_state_obj_name: #name #ty_generics) -> bool {
                 if self.can_change(#new_state_obj_name.clone()) {
-                    *self = #new_state_obj_name.clone();
+                    *self = #new_state_obj_name;
                     return true
                 }
                 false
             }
-            fn can_change(&self, #new_state_obj_name: #name #ty_generics) -> bool {
+            fn can_change(&self,
+                          #new_state_obj_name: #name #ty_generics) -> bool {
                 #transitions
             }
             fn is_finish_state(#new_state_obj_name: #name #ty_generics) -> bool {
-                #finish_states
+                #finish_states_match
             }
             fn at_finish_state(&self) -> bool {
                 Self::is_finish_state(self.clone())
+            }
+            fn finish_states() -> usize {
+                #finish_states_len
             }
         }
     }
@@ -242,7 +269,7 @@ fn derives(nested: &[syn::NestedMetaItem], trait_name: &str) -> bool {
     }).is_some()
 }
 
-#[proc_macro_derive(FiniteStateMachine, attributes(state_transitions))]
+#[proc_macro_derive(StateMachine, attributes(state_transitions))]
 pub fn fxsm(input: TokenStream) -> TokenStream {
     // Construct a string representation of the type definition
     let s = input.to_string();
@@ -262,19 +289,23 @@ fn impl_fsm(ast: &syn::DeriveInput) -> Tokens {
         if let Some(ref a) = ast.attrs.iter().find(|a| a.name() == "derive") {
             if let syn::MetaItem::List(_, ref nested) = a.value {
                 if derives(nested, "Copy") {
-                    return gen_for_copyable(&ast.ident, &variants, &ast.generics);
+                    return gen_for_copyable(&ast.ident,
+                                            &variants,
+                                            &ast.generics);
                 } else if derives(nested, "Clone") {
-                    return gen_for_clonable(&ast.ident, &variants, &ast.generics);
+                    return gen_for_clonable(&ast.ident,
+                                            &variants,
+                                            &ast.generics);
                 } else {
-                    panic!("Unable to produce Finite State Machine code on a enum which does not drive Copy nor Clone traits.");
+                    panic!("Unable to produce State Machine code on a enum which does not drive Copy nor Clone traits.");
                 }
             } else {
-                panic!("Unable to produce Finite State Machine code on a enum which does not drive Copy nor Clone traits.");
+                panic!("Unable to produce State Machine code on a enum which does not drive Copy nor Clone traits.");
             }
         } else {
             panic!("How were you able to call me without derive!?!?");
         }
     } else {
-        panic!("Finite State Machine must be derived on a enum.");
+        panic!("State Machine must be derived on a enum.");
     }
 }

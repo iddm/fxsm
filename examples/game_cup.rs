@@ -3,7 +3,7 @@ extern crate fxsm_derive;
 extern crate fxsm;
 
 
-#[derive(Clone, Debug, FiniteStateMachine)]
+#[derive(Clone, Debug, StateMachine)]
 enum CupState {
     #[state_transitions(Checkins, Aborted, Rescheduled)]
     Waiting,
@@ -17,7 +17,7 @@ enum CupState {
     Rescheduled { info: String },
     Finished,
 }
-/* Here is a short diagram without `Rescheduled` part.
+/* Here is a short diagram without `Rescheduled` item.
  * (Waiting) -> (Checkins) -> (InProgress)
  *    |              |         |    |
  *     \             |        /     |
@@ -25,18 +25,19 @@ enum CupState {
  *       ------->(Aborted)<--    (Finished)
  */
 
-#[derive(Copy, Clone, Debug, FiniteStateMachine)]
+#[derive(Copy, Clone, Debug, StateMachine)]
 enum CupStateNew<W: Copy, C: Copy, I: Copy, F: Copy> {
     #[state_transitions(Finished, Checkins)]
     Waiting(W),
     Checkins(C),
-    InProgress(I),
+    InProgress(I), // unreachable from the state machine
     Finished{ f: F },
 }
 
 fn main() {
-    use fxsm::{ FiniteStateMachine };
+    use fxsm::{ StateMachine };
     let mut fsm = CupState::Waiting;
+    assert_eq!(CupState::finish_states(), 3);
     // must not be able to change to itself
     assert!(!fsm.can_change(CupState::Waiting));
     assert!(fsm.can_change(CupState::Checkins));

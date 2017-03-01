@@ -1,10 +1,10 @@
 [package]
 name = "fxsm"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Victor Polevoy <fx@thefx.co>"]
 
-description = "A FSM procedural macro for enums."
+description = "A state machine procedural macro for enums."
 license = "MIT"
-keywords = ["fsm", "finite", "state", "machine"]
+keywords = ["state", "machine"]
 
 repository = "https://github.com/vityafx/fxsm"
