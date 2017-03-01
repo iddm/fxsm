@@ -24,6 +24,8 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
     fn is_finish_state(state: S) -> bool;
     /// Returns true if the FSM is in a finish state.
     fn at_finish_state(&self) -> bool;
+    /// Returns a number of total finish states.
+    fn finish_states() -> usize;
 }
 ```
  
@@ -34,8 +36,8 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
 
  ```toml
  [dependencies]
- fxsm-derive = "0.1"
- fxsm = "0.1"
+ fxsm-derive = "0.2"
+ fxsm = "0.2"
  ```
 
 2. Create a Finite-State Machine:
@@ -68,6 +70,7 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
  fn main() {
      use fxsm::{ FiniteStateMachine };
      let mut fsm = CupState::Waiting;
+     assert_eq!(CupState::finish_states(), 3);
      // must not be able to change to itself
      assert!(!fsm.can_change(CupState::Waiting));
      assert!(fsm.can_change(CupState::Checkins));
