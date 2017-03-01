@@ -4,31 +4,13 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 
-A FSM procedural macro for enums.
-
-This library aims to implement a very simple FSM for your rust enums.
+A very simple state machine procedural macro for enums.
 
 ## How does it work
 
-When you derive a `FiniteStateMachine` macro it performs a check what implementation to provide based on what your enum derives.
- If your enum implements `Copy` trait then the library will provide a code with copying, otherwise with cloning impls.
- You may use the FSM through a `FiniteStateMachine` trait:
- 
- ```rust
- pub trait FiniteStateMachine<S> {
-    /// Returns true if it changed state successfully; false otherwise.
-    fn change(&mut self, new_state: S) -> bool;
-    /// Returns true if it is possible to change state to `new_state`; false otherwise.
-    fn can_change(&self, new_state: S) -> bool;
-    /// Returns true if it is a one of finish states.
-    fn is_finish_state(state: S) -> bool;
-    /// Returns true if the FSM is in a finish state.
-    fn at_finish_state(&self) -> bool;
-    /// Returns a number of total finish states.
-    fn finish_states() -> usize;
-}
-```
- 
+It simply generates match conditions on your enums in appropriate `StateMachine` trait's methods.
+ You may use the state machine through a [`StateMachine`](https://github.com/vityafx/fxsm/blob/master/fxsm/src/lib.rs) trait.
+  
 
 ## Usage
 
@@ -40,7 +22,7 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
  fxsm = "0.2"
  ```
 
-2. Create a Finite-State Machine:
+2. Create a State Machine:
 
  ```rust
  #[macro_use]
@@ -68,7 +50,7 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
 
  ```rust
  fn main() {
-     use fxsm::{ FiniteStateMachine };
+     use fxsm::{ StateMachine };
      let mut fsm = CupState::Waiting;
      assert_eq!(CupState::finish_states(), 3);
      // must not be able to change to itself
@@ -99,6 +81,8 @@ When you derive a `FiniteStateMachine` macro it performs a check what implementa
      assert!(!CupState::is_finish_state(CupState::InProgress(String::default())));
  }
  ```
+ 
+ More and updated examples are in [examples directory](https://github.com/vityafx/fxsm/blob/master/examples).
 
 ## License
 
