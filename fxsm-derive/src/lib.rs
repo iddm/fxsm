@@ -111,8 +111,7 @@ fn serialize_variant(ident: &syn::Ident,
     }
 }
 
-fn serialize_enum(ident: &syn::Ident,
-                  variants: &[syn::Variant]) -> Fragment {
+fn serialize_enum(ident: &syn::Ident, variants: &[syn::Variant]) -> Fragment {
     let var_data_map: BTreeMap<String, EnumFieldData> = variants.iter()
         .map(|var| {
             let field_data = match var.data {
@@ -146,8 +145,7 @@ fn serialize_enum(ident: &syn::Ident,
     }
 }
 
-fn get_finish_states(name: &syn::Ident,
-                     variants: &[syn::Variant]) -> (Fragment, usize) {
+fn get_finish_states(name: &syn::Ident, variants: &[syn::Variant]) -> (Fragment, usize) {
     let var_data_map: BTreeMap<String, EnumFieldData> = variants.iter()
         .map(|var| {
             let field_data = match var.data {
@@ -183,42 +181,6 @@ fn get_finish_states(name: &syn::Ident,
             #others
         }
     }, len)
-}
-
-fn gen_for_copyable(name: &syn::Ident,
-                    variants: &[syn::Variant],
-                    generics: &syn::Generics) -> Tokens {
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-    let transitions = Stmts(serialize_enum(name, variants));
-    let finish_states = get_finish_states(name, variants);
-    let finish_states_match = Stmts(finish_states.0);
-    let finish_states_len = finish_states.1;
-    let new_state_obj_name = syn::Ident::new(NEW_STATE_OBJ_NAME);
-    quote! {
-        impl #impl_generics fxsm::StateMachine<#name #ty_generics> for #name #ty_generics #where_clause {
-            fn change(&mut self,
-                      #new_state_obj_name: #name #ty_generics) -> bool {
-                if self.can_change(#new_state_obj_name) {
-                    *self = #new_state_obj_name;
-                    return true
-                }
-                false
-            }
-            fn can_change(&self,
-                          #new_state_obj_name: #name #ty_generics) -> bool {
-                #transitions
-            }
-            fn is_finish_state(#new_state_obj_name: #name #ty_generics) -> bool {
-                #finish_states_match
-            }
-            fn at_finish_state(&self) -> bool {
-                Self::is_finish_state(*self)
-            }
-            fn finish_states() -> usize {
-                #finish_states_len
-            }
-        }
-    }
 }
 
 fn gen_for_clonable(name: &syn::Ident,
@@ -257,18 +219,6 @@ fn gen_for_clonable(name: &syn::Ident,
     }
 }
 
-fn derives(nested: &[syn::NestedMetaItem], trait_name: &str) -> bool {
-    nested.iter().find(|n| {
-        if let syn::NestedMetaItem::MetaItem(ref mt) = **n {
-            if let syn::MetaItem::Word(ref id) = *mt {
-                return id == trait_name;
-            }
-            return false
-        }
-        false
-    }).is_some()
-}
-
 #[proc_macro_derive(StateMachine, attributes(state_transitions))]
 pub fn fxsm(input: TokenStream) -> TokenStream {
     // Construct a string representation of the type definition
@@ -286,25 +236,7 @@ pub fn fxsm(input: TokenStream) -> TokenStream {
 
 fn impl_fsm(ast: &syn::DeriveInput) -> Tokens {
     if let syn::Body::Enum(ref variants) = ast.body {
-        if let Some(ref a) = ast.attrs.iter().find(|a| a.name() == "derive") {
-            if let syn::MetaItem::List(_, ref nested) = a.value {
-                if derives(nested, "Copy") {
-                    return gen_for_copyable(&ast.ident,
-                                            &variants,
-                                            &ast.generics);
-                } else if derives(nested, "Clone") {
-                    return gen_for_clonable(&ast.ident,
-                                            &variants,
-                                            &ast.generics);
-                } else {
-                    panic!("Unable to produce State Machine code on a enum which does not drive Copy nor Clone traits.");
-                }
-            } else {
-                panic!("Unable to produce State Machine code on a enum which does not drive Copy nor Clone traits.");
-            }
-        } else {
-            panic!("How were you able to call me without derive!?!?");
-        }
+        return gen_for_clonable(&ast.ident, &variants, &ast.generics);
     } else {
         panic!("State Machine must be derived on a enum.");
     }
