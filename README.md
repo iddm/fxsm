@@ -1,6 +1,6 @@
 # fxsm
 
-[![](https://meritbadge.herokuapp.com/fxsm)](https://crates.io/crates/fxsm) [![](https://travis-ci.org/vityafx/fxsm.svg?branch=master)](https://travis-ci.org/vityafx/urlshortener-rs)
+[![](https://meritbadge.herokuapp.com/fxsm)](https://crates.io/crates/fxsm) [![](https://travis-ci.org/iddm/fxsm.svg?branch=master)](https://travis-ci.org/iddm/urlshortener-rs)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 
@@ -9,7 +9,7 @@ A very simple state machine procedural macro for enums.
 ## How does it work
 
 It simply generates match conditions on your enums in appropriate `StateMachine` trait's methods.
- You may use the state machine through a [`StateMachine`](https://github.com/vityafx/fxsm/blob/master/fxsm/src/lib.rs) trait.
+ You may use the state machine through a [`StateMachine`](https://github.com/iddm/fxsm/blob/master/fxsm/src/lib.rs) trait.
   
 
 ## Usage
@@ -82,8 +82,8 @@ It simply generates match conditions on your enums in appropriate `StateMachine`
  }
  ```
  
- More and updated examples are in [examples directory](https://github.com/vityafx/fxsm/blob/master/examples).
+ More and updated examples are in [examples directory](https://github.com/iddm/fxsm/blob/master/examples).
 
 ## License
 
-This project is [licensed under the MIT license](https://github.com/vityafx/urlshortener-rs/blob/master/LICENSE).
+This project is [licensed under the MIT license](https://github.com/iddm/urlshortener-rs/blob/master/LICENSE).

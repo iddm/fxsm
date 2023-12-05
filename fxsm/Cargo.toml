@@ -7,4 +7,4 @@ description = "A state machine procedural macro for enums."
 license = "MIT"
 keywords = ["state", "machine"]
 
-repository = "https://github.com/vityafx/fxsm"
+repository = "https://github.com/iddm/fxsm"
